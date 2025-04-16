@@ -1,64 +1,29 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>你好，GitHub</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background: linear-gradient(to right, #74ebd5, #acb6e5);
-            color: #fff;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background: rgba(0, 0, 0, 0.6);
-            padding: 20px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        main {
-            padding: 50px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 18px;
-            border: none;
-            background-color: #ff4081;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
-        button:hover {
-            background-color: #e91e63;
-        }
-        .message {
-            margin-top: 20px;
-            font-size: 22px;
-            font-weight: bold;
-            display: none;
-        }
-    </style>
-</head>
-<body>
+<main>
+    <h1>今天 天氣不錯</h1>
+    <p>還行</p>
+    <button onclick="showMessage()">點我試試</button>
+    <p class="message">你按下按鈕了！🎉</p>
 
-    <header>林子揚的個人小網站</header>
+    <section style="margin-top: 50px;">
+        <h2>開發板的成果展示</h2>
 
-    <main>
-        <h1>今天 天氣不錯</h1>
-        <p>還行</p>
-        <button onclick="showMessage()">點我試試</button>
-        <p class="message">你按下按鈕了！🎉</p>
-    </main>
+        <div style="margin: 20px 0;">
+            <p><strong>STM32 orange led blink</strong></p>
+            <a href="https://wokwi.com/projects/428412528326705153" target="_blank" style="color: #fff; text-decoration: underline;">
+                點按此處
+            </a>
+        </div>
 
-    <script>
-        function showMessage() {
-            document.querySelector('.message').style.display = 'block';
-        }
-    </script>
+        <div style="margin: 20px 0;">
+            <p><strong>basic-customchip</strong></p>
+            <a href="https://wokwi.com/projects/428404275963416577" target="_blank" style="color: #fff; text-decoration: underline;">
+                點按此處
+            </a>
+        </div>
 
-</body>
-</html>
+        <div style="margin: 20px 0;">
+            <p><strong>ESP32 blink led use http:server</strong></p>
+            <p style="color: #ccc;">（尚未提供連結）</p>
+        </div>
+    </section>
+</main>
