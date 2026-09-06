@@ -1,29 +1,666 @@
-<main>
-    <h1>林子揚 網站</h1>
-    <p>今天 天氣不錯  還行</p>
-    <button onclick="showMessage()">點我試試</button>
-    <p class="message">你按下按鈕了！🎉</p>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>林子揚 Roy Lin｜韌體 × 邊緣 AI × 熱流系統整合</title>
+<meta name="description" content="工研院綠能所副研究人員。以熱流為底、韌體為手，把量測、控制與 AI 串成能落地的系統。第一作者期刊論文兩篇、ICR 2027 投稿、產業學院講師。">
+<meta property="og:title" content="林子揚 Roy Lin｜韌體 × 邊緣 AI × 熱流系統整合">
+<meta property="og:description" content="從熱傳理論、控制演算法、韌體實作到現場配線的全鏈路工程師。">
+<meta property="og:type" content="profile">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090b; --bg2:#0d0f13; --panel:#111419; --panel2:#161a21;
+  --line:#20242c; --line2:#2b313b;
+  --text:#e9ecf1; --muted:#98a1ae; --dim:#6b7480;
+  --heat:#ff7a33; --heat2:#ffb066; --sig:#38bdf8; --ok:#4ade80;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+  --sans:"Inter","Noto Sans TC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --max:1120px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+  font-size:16px;line-height:1.75;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+img{max-width:100%}
 
-    <section style="margin-top: 50px;">
-        <h2 style="color: #f0e68c;">開發板的成果展示</h2>
+/* ---------- background texture ---------- */
+.bgfx{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bgfx::before{content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+  background-size:64px 64px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 20%,transparent 75%);
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 20%,transparent 75%)}
+.bgfx::after{content:"";position:absolute;top:-25vh;left:50%;transform:translateX(-50%);
+  width:120vw;height:80vh;border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(255,122,51,.13),rgba(56,189,248,.06) 45%,transparent 70%);
+  filter:blur(20px)}
 
-        <div style="margin: 20px 0;">
-            <p><strong>STM32 orange led blink</strong></p>
-            <a href="https://wokwi.com/projects/428412528326705153" target="_blank" style="color: #ffeaa7; text-decoration: underline;">
-                點按此處
-            </a>
+.wrap{position:relative;z-index:1;max-width:var(--max);margin:0 auto;padding:0 24px}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:50;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  background:rgba(8,9,11,.78);border-bottom:1px solid transparent;transition:border-color .3s}
+nav.stuck{border-bottom-color:var(--line)}
+.navin{max-width:var(--max);margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px}
+.brand{font-weight:800;letter-spacing:-.02em;font-size:15px;white-space:nowrap}
+.brand span{color:var(--heat)}
+.navlinks{display:flex;gap:22px;margin-left:auto;font-size:13.5px;color:var(--muted);font-weight:500}
+.navlinks a{text-decoration:none;transition:color .2s}
+.navlinks a:hover{color:var(--text)}
+.navcta{font-size:13px;font-weight:600;text-decoration:none;padding:7px 14px;border-radius:8px;
+  border:1px solid var(--line2);color:var(--text);transition:.2s;white-space:nowrap;margin-left:auto}
+.navlinks + .navcta{margin-left:0}
+.navcta:hover{border-color:var(--heat);color:var(--heat)}
+@media(max-width:860px){.navlinks{display:none}}
+
+/* ---------- hero ---------- */
+header{padding:96px 0 72px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;
+  letter-spacing:.06em;color:var(--muted);border:1px solid var(--line);background:var(--panel);
+  padding:6px 14px;border-radius:999px;margin-bottom:26px;line-height:1.5}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);flex:none}
+h1{font-size:clamp(42px,7.5vw,76px);line-height:1.04;margin:0 0 6px;font-weight:800;letter-spacing:-.035em}
+.en{font-size:clamp(15px,2.4vw,20px);font-family:var(--mono);color:var(--dim);letter-spacing:.14em;margin-bottom:28px}
+.tagline{font-size:clamp(20px,3.1vw,30px);font-weight:700;line-height:1.5;max-width:22ch;letter-spacing:-.015em;margin:0 0 24px}
+.tagline b{background:linear-gradient(100deg,var(--heat),var(--heat2) 45%,var(--sig));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--muted);max-width:60ch;font-size:16.5px;margin:0 0 34px}
+.lede strong{color:var(--text);font-weight:600}
+.btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:56px}
+.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:600;font-size:14.5px;
+  padding:12px 22px;border-radius:10px;transition:.2s}
+.btn.p{background:var(--heat);color:#180a02}
+.btn.p:hover{background:var(--heat2);transform:translateY(-1px)}
+.btn.s{border:1px solid var(--line2);color:var(--text)}
+.btn.s:hover{border-color:var(--muted);background:var(--panel)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.stat{background:var(--bg2);padding:22px 20px}
+.stat .n{font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-.03em;line-height:1.1;
+  background:linear-gradient(180deg,#fff,#b9c0cb);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat .n em{font-style:normal;font-size:.5em;color:var(--heat);-webkit-text-fill-color:var(--heat);margin-left:3px}
+.stat .n.sm{font-size:clamp(19px,2.6vw,25px);letter-spacing:-.005em}
+.stat .l{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+@media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* looking-for bar */
+.seek{margin-top:22px;border:1px dashed var(--line2);border-radius:12px;padding:16px 20px;
+  display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;background:rgba(255,122,51,.03)}
+.seek .k{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--heat);white-space:nowrap}
+.seek .v{font-size:14.5px;color:var(--muted)}
+.seek .v b{color:var(--text);font-weight:600}
+
+/* ---------- sections ---------- */
+section{padding:88px 0;border-top:1px solid var(--line)}
+.shead{margin-bottom:44px}
+.snum{font-family:var(--mono);font-size:12px;color:var(--heat);letter-spacing:.16em;display:block;margin-bottom:10px}
+h2{font-size:clamp(27px,4.2vw,38px);margin:0 0 12px;font-weight:800;letter-spacing:-.028em;line-height:1.2}
+.sdesc{color:var(--muted);max-width:62ch;margin:0;font-size:15.5px}
+
+/* capability cards */
+.caps{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:820px){.caps{grid-template-columns:1fr}}
+.cap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px 26px 22px;
+  position:relative;overflow:hidden;transition:.25s}
+.cap:hover{border-color:var(--line2);transform:translateY(-2px)}
+.cap::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--heat),transparent 70%);opacity:.7}
+.cap h3{margin:0 0 4px;font-size:17.5px;font-weight:700;letter-spacing:-.01em}
+.cap .sub{font-family:var(--mono);font-size:11.5px;color:var(--dim);letter-spacing:.08em;margin-bottom:14px}
+.cap p{margin:0 0 16px;font-size:14.5px;color:var(--muted);line-height:1.7}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--mono);font-size:11px;padding:3.5px 9px;border-radius:6px;
+  background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+
+/* project grid */
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:820px){.pgrid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;
+  display:flex;flex-direction:column;transition:.25s;position:relative}
+.card:hover{border-color:var(--line2);background:var(--panel2);transform:translateY(-2px)}
+.card.feat{grid-column:span 2;border-color:rgba(255,122,51,.3);
+  background:linear-gradient(135deg,rgba(255,122,51,.05),var(--panel) 55%)}
+@media(max-width:820px){.card.feat{grid-column:span 1}}
+.ctop{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.card h3{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em;flex:1;min-width:60%}
+.badge{font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:3px 8px;border-radius:5px;
+  border:1px solid rgba(255,122,51,.35);color:var(--heat);background:rgba(255,122,51,.08);white-space:nowrap;
+  line-height:1.6}
+.badge.b2{border-color:rgba(56,189,248,.3);color:var(--sig);background:rgba(56,189,248,.07)}
+.card .hook{font-size:14.5px;color:var(--text);font-weight:500;margin:0 0 10px;line-height:1.6}
+.card p{margin:0 0 16px;font-size:14px;color:var(--muted);line-height:1.7}
+.card .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.repo{font-family:var(--mono);font-size:12px;color:var(--sig);text-decoration:none;white-space:nowrap;
+  border-bottom:1px solid transparent;transition:.2s}
+.repo:hover{border-bottom-color:var(--sig)}
+.lnks{display:flex;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+.repo.vid{color:var(--heat2)}
+.repo.vid:hover{border-bottom-color:var(--heat2)}
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 16px}
+@media(max-width:640px){.nums{grid-template-columns:repeat(2,1fr)}}
+.num{background:rgba(255,122,51,.06);border:1px solid rgba(255,122,51,.18);border-radius:9px;padding:12px 13px}
+.num b{display:block;font-family:var(--mono);font-size:17px;color:var(--heat2);font-weight:600;letter-spacing:-.01em}
+.num span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.45}
+.metric{font-family:var(--mono);font-size:12.5px;color:var(--heat2);margin:0 0 14px;
+  padding-left:11px;border-left:2px solid rgba(255,122,51,.45);line-height:1.7}
+
+/* publications */
+.pubs{display:flex;flex-direction:column;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.pub{background:var(--bg2);padding:22px 24px;display:grid;grid-template-columns:112px 1fr auto;
+  gap:20px;align-items:baseline;transition:background .2s}
+.pub:hover{background:var(--panel)}
+.pub .when{font-family:var(--mono);font-size:12.5px;color:var(--heat)}
+.pub .ti{font-size:15px;font-weight:600;line-height:1.6;margin-bottom:5px}
+.pub .ve{font-size:13px;color:var(--muted)}
+.pub .en{font-size:12.5px;color:var(--dim);font-style:italic;line-height:1.55;margin-top:3px}
+.pub .links{margin-top:9px;display:flex;gap:14px;flex-wrap:wrap}
+.pub .links a{font-family:var(--mono);font-size:11.5px;color:var(--sig);text-decoration:none;
+  border-bottom:1px solid rgba(56,189,248,.3);transition:.2s}
+.pub .links a:hover{border-bottom-color:var(--sig)}
+.pub .role{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:6px;
+  background:var(--panel2);border:1px solid var(--line2);color:var(--text);white-space:nowrap}
+@media(max-width:720px){.pub{grid-template-columns:1fr;gap:8px}.pub .role{justify-self:start}}
+
+/* timeline */
+.tl{position:relative;padding-left:30px}
+.tl::before{content:"";position:absolute;left:5px;top:8px;bottom:8px;width:1px;
+  background:linear-gradient(180deg,var(--heat),var(--line) 30%,var(--line))}
+.ev{position:relative;padding-bottom:38px}
+.ev:last-child{padding-bottom:0}
+.ev::before{content:"";position:absolute;left:-29px;top:8px;width:11px;height:11px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--line2)}
+.ev.now::before{border-color:var(--heat);background:var(--heat);box-shadow:0 0 0 4px rgba(255,122,51,.15)}
+.ev .when{font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.05em}
+.ev h3{margin:4px 0 2px;font-size:17px;font-weight:700}
+.ev .org{font-size:14px;color:var(--muted);margin-bottom:12px}
+.ev ul{margin:0;padding-left:18px;color:var(--muted);font-size:14.5px;line-height:1.75}
+.ev li{margin-bottom:6px}
+.ev li strong{color:var(--text);font-weight:600}
+
+/* teaching */
+.tgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+@media(max-width:820px){.tgrid{grid-template-columns:1fr}}
+.tbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px}
+.tbox.hl{border-color:rgba(255,122,51,.3);background:linear-gradient(150deg,rgba(255,122,51,.06),var(--panel) 60%)}
+.tbox h3{margin:0 0 6px;font-size:18px;font-weight:700;line-height:1.45}
+.tbox .meta{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-bottom:16px;letter-spacing:.05em;line-height:1.7}
+.tbox ul{margin:0;padding-left:18px;font-size:14.5px;color:var(--muted);line-height:1.75}
+.tbox li{margin-bottom:8px}
+.tbox li strong{color:var(--text);font-weight:600}
+
+/* certs */
+.certs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.certs{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.certs{grid-template-columns:1fr}}
+.cert{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:18px}
+.cert .k{font-family:var(--mono);font-size:10.5px;color:var(--heat);letter-spacing:.1em;margin-bottom:7px}
+.cert .n{font-size:14.5px;font-weight:600;line-height:1.5;margin-bottom:4px}
+.cert .i{font-size:12.5px;color:var(--dim);line-height:1.5}
+
+/* contact */
+.contact{text-align:center;padding:96px 0 80px}
+.contact h2{margin-bottom:16px}
+.contact p{color:var(--muted);max-width:52ch;margin:0 auto 32px;font-size:16px}
+footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;
+  color:var(--dim);font-size:12.5px;font-family:var(--mono)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(.2,.7,.3,1),transform .6s cubic-bezier(.2,.7,.3,1)}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="bgfx"></div>
+
+<nav id="nav">
+  <div class="navin">
+    <div class="brand">林子揚<span>.</span></div>
+    <div class="navlinks">
+      <a href="#cap">核心能力</a>
+      <a href="#work">精選作品</a>
+      <a href="#pub">著作發表</a>
+      <a href="#exp">經歷</a>
+      <a href="#teach">教學與輔導</a>
+    </div>
+    <a class="navcta" href="https://github.com/YORROY123" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow"><span class="dot"></span>工業技術研究院 綠能與環境研究所 · 副研究人員（研發替代役）</div>
+    <h1>林子揚</h1>
+    <div class="en">ROY LIN</div>
+    <p class="tagline">以熱流為底、韌體為手，<b>把量測、控制與 AI 串成能落地的系統。</b></p>
+    <p class="lede">
+      我的工作橫跨<strong>商用冷凍設備能效測試（CNS 62552）、IoT 韌體開發、邊緣 AI 部署與數位孿生系統</strong>。
+      從熱傳理論推導、控制演算法建模、Zephyr／ESP32 韌體實作，一路到現場配電盤的配線判讀——
+      這條鏈路我可以自己走完，不需要在任何一段等別人。
+    </p>
+    <div class="btns">
+      <a class="btn p" href="#work">看精選作品 →</a>
+      <a class="btn s" href="https://github.com/YORROY123" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn s" href="#contact">聯絡我</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n">2<em>篇</em></div><div class="l">第一作者期刊論文<br>2026 年已刊登</div></div>
+      <div class="stat"><div class="n">ICR<em>27</em></div><div class="l">國際冷凍大會投稿<br>首爾 COEX．通訊作者</div></div>
+      <div class="stat"><div class="n sm">SEMICON</div><div class="l">Taiwan 2026 參展<br>demo 開發．現場技術解說</div></div>
+      <div class="stat"><div class="n">14<em>人</em></div><div class="l">產業學院企業班講師<br>工程師 × 處長經理級</div></div>
+    </div>
+
+    <div class="seek">
+      <span class="k">LOOKING FOR</span>
+      <span class="v"><b>韌體工程師</b> · <b>邊緣 AI／AIoT 工程師</b> · <b>BIOS／BMC 韌體</b> · <b>熱傳工程師</b>　—　研發替代役預計 2027 年初期滿</span>
+    </div>
+  </div>
+</header>
+
+<section id="cap">
+  <div class="wrap">
+    <div class="shead rv">
+      <span class="snum">01 / CAPABILITIES</span>
+      <h2>四個能力，一條鏈路</h2>
+      <p class="sdesc">大部分工程師會其中一段。我的價值在於能把物理量測、韌體、AI 推論與現場硬體接成一個真的會動的系統，而不是四份彼此對不起來的規格書。</p>
+    </div>
+    <div class="caps">
+      <div class="cap rv">
+        <h3>韌體與嵌入式</h3>
+        <div class="sub">FIRMWARE / EMBEDDED</div>
+        <p>Nordic nRF52832 / nRF54L15 / nRF5340（Zephyr RTOS）、ESP32 / ESP32-S3、STM32。BLE 廣播與低功耗設計、NTC 溫度量測與 Steinhart-Hart 三點校正、Flash 環形記錄、SPI slave IOMUX 高速取樣、RS-422 差動接收與電平轉換。</p>
+        <div class="chips"><span class="chip">C / C++</span><span class="chip">Zephyr</span><span class="chip">Nordic</span><span class="chip">ESP32</span><span class="chip">BLE / LE Audio</span><span class="chip">RS485 / Modbus</span></div>
+      </div>
+      <div class="cap rv">
+        <h3>邊緣 AI / AIoT</h3>
+        <div class="sub">EDGE AI</div>
+        <p>Jetson Orin / Nano、Raspberry Pi 5、Hailo AI 加速器。地端 LLM 零樣本語意映射、faster-whisper ASR、piper TTS、YOLO11 + ByteTrack 追蹤、熱像人體追蹤。開發習慣是「先模擬、後硬體」，資源有限時仍能穩定推進。</p>
+        <div class="chips"><span class="chip">PyTorch</span><span class="chip">YOLO11</span><span class="chip">地端 LLM</span><span class="chip">Jetson</span><span class="chip">Hailo</span><span class="chip">OpenVINO</span></div>
+      </div>
+      <div class="cap rv">
+        <h3>熱流與數值分析</h3>
+        <div class="sub">THERMAL / NUMERICAL</div>
+        <p>CFD-ACE+ 熱傳模擬；以 Visual Studio 編譯 Fortran 封裝成 DLL 串接 CFD-ACE+，將單位體積熱源細化為單一網格熱源。共軛梯度法（CGM）結合紅外線熱像反算鋰電池未知熱源、<strong style="color:#e9ecf1">PINN 物理資訊神經網路反算材料熱傳導係數</strong>、CalculiX FEM 正算造資料、有限差分法求解二維穩態熱傳導、能量平衡熱負載建模。</p>
+        <div class="chips"><span class="chip">CFD-ACE+</span><span class="chip">FORTRAN</span><span class="chip">逆熱傳導 CGM</span><span class="chip">PINN</span><span class="chip">CalculiX FEM</span><span class="chip">Simulink</span><span class="chip">SolidWorks</span><span class="chip">NX</span></div>
+      </div>
+      <div class="cap rv">
+        <h3>系統整合與現場實務</h3>
+        <div class="sub">INTEGRATION / FIELD</div>
+        <p>Node.js / Express / socket.io、MQTT、InfluxDB、MySQL / SQLite、Streamlit、Docker、Linux、Tailscale。具<strong style="color:#e9ecf1">乙種電匠與丙級室內配線技術士</strong>資格，能自行判讀配電與弱電配線，讓系統整合從軟體一路涵蓋到硬體與現場施工。</p>
+        <div class="chips"><span class="chip">Node.js</span><span class="chip">MQTT / EMQX</span><span class="chip">FastAPI</span><span class="chip">Docker</span><span class="chip">PLC 梯形圖</span><span class="chip">工業配線</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="work">
+  <div class="wrap">
+    <div class="shead rv">
+      <span class="snum">02 / SELECTED WORK</span>
+      <h2>精選作品</h2>
+      <p class="sdesc">依「從理論到落地」的完整度排序，標註 FEATURED 者為橫跨最多層級的代表作。另有 19+ 個公開專案在 <a href="https://github.com/YORROY123" target="_blank" rel="noopener" style="color:var(--sig);text-decoration:none;border-bottom:1px solid rgba(56,189,248,.3)">GitHub</a> 持續更新。</p>
+    </div>
+    <div class="pgrid">
+
+      <div class="card feat rv">
+        <div class="ctop"><h3>熱負載預測變頻控制</h3><span class="badge">FEATURED</span><span class="badge b2">專利技術驗證</span></div>
+        <p class="hook">讓冷櫃不再「等溫度跑掉才反應」，而是先算出有多少熱跑進來，直接叫壓縮機用剛剛好的力氣把它抵銷掉。</p>
+        <p>市售變頻冷櫃只看回風溫差分三段轉速（2000／3000／4500 rpm）——反應慢半拍、段數太粗、不知道熱從哪來。我以能量平衡為骨幹，把開門熱負載與環境熱負載拆成兩筆帳，直接推導出所需壓縮機轉速與運轉時間，建立 Simulink 三層架構模型與參數最佳化求解流程，完成模擬驗證並量化庫溫波動與耗電改善。此工作支援院內「變頻控制裝置與方法」專利提案之技術驗證。</p>
+        <div class="metric">傳統分段控制在開關門條件下庫溫差可達 27.4°C — 這正是預測式控制要解掉的痛點</div>
+        <div class="foot"><div class="chips"><span class="chip">能量平衡建模</span><span class="chip">Simulink</span><span class="chip">參數最佳化</span><span class="chip">變頻控制</span><span class="chip">熱傳</span></div></div>
+      </div>
+
+      <div class="card feat rv">
+        <div class="ctop"><h3>庫板熱傳導係數反算（PINNs）</h3><span class="badge">FEATURED</span><span class="badge b2">物理 × 機器學習</span></div>
+        <p class="hook">我的第一篇期刊論文盤點了「量測庫板熱傳導係數的既有方法」有哪些不足。這個專案是我對那篇論文的回答。</p>
+        <p>以 <strong style="color:#e9ecf1">PINN（Physics-Informed Neural Network）</strong>反算冷凍冷藏庫板各層的熱傳導係數 k：把 k 設為可訓練參數，讓網路同時滿足統御方程（穩態 ∇·(k∇T)=0）與 Dirichlet／Neumann／Robin 三類邊界條件，最小化複合損失。訓練資料以 <strong style="color:#e9ecf1">FreeCAD + CalculiX FEM</strong> 參數化建模、掃描〔加熱量 × k〕正算產生，另以一維解析解秒算交叉驗證。最後封裝成可重複使用的預測工具——丟進溫度量測直接輸出 k，不必再跑一次 FEM。</p>
+        <div class="metric">以已知真值 k = 0.022 / 0.025 / 0.028 W·m⁻¹K⁻¹ 的 FEM 資料集完成校正驗證</div>
+        <p style="font-size:13.5px;color:var(--dim);border-left:2px solid var(--line2);padding-left:12px;margin-bottom:16px">碩士論文用共軛梯度法（CGM）結合熱像反算鋰電池未知熱源 → 期刊論文盤點庫板量測的既有方法 → 用 PINN 做出新解法。同一個逆熱傳導問題，三年三種答案。</p>
+        <div class="foot"><div class="chips"><span class="chip">PINN</span><span class="chip">逆熱傳導</span><span class="chip">CalculiX FEM</span><span class="chip">FreeCAD</span><span class="chip">PyTorch</span><span class="chip">代理模型</span></div></div>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>人流分析系統 Footfall Analytics</h3><span class="badge b2">自建取代商用</span></div>
+        <p class="hook">一支攝影機看門口，即時算出進場／出場／場內人數，全部本機運算、零授權費。</p>
+        <p>以 YOLO11 + ByteTrack + FastAPI 自建越線進出計數、停留區與停留時間、排隊壅塞告警、累積熱區圖；SQLite 落地可查每小時／每日並匯出 CSV，另提供 MQTT 上拋與 REST API 供 SCADA／BI 串接。對標研華 VisionSense Retail 的核心功能。</p>
+        <div class="metric">純 CPU（i7-14700）768×432 → 約 24 FPS，無需 GPU</div>
+        <div class="foot"><div class="chips"><span class="chip">YOLO11</span><span class="chip">ByteTrack</span><span class="chip">FastAPI</span><span class="chip">OpenVINO</span><span class="chip">MQTT</span></div></div>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>IoT Energy Cloud</h3><span class="badge b2">平台架構</span></div>
+        <p class="hook">多租戶 IoT 能源管理平台，處理時序資料的寫入、查詢與租戶隔離。</p>
+        <p>以 EMQX 承接大量設備 MQTT 連線、InfluxDB 儲存時序量測資料、FastAPI 提供多租戶 API 與權限隔離。把單一場域的量測系統，往「可服務多客戶」的平台架構推進。</p>
+        <div class="foot">
+          <div class="chips"><span class="chip">EMQX</span><span class="chip">InfluxDB</span><span class="chip">FastAPI</span><span class="chip">Python</span></div>
+          <a class="repo" href="https://github.com/YORROY123/iot-energy-cloud" target="_blank" rel="noopener">iot-energy-cloud ↗</a>
         </div>
+      </div>
 
-        <div style="margin: 20px 0;">
-            <p><strong>basic-customchip</strong></p>
-            <a href="https://wokwi.com/projects/428404275963416577" target="_blank" style="color: #ffeaa7; text-decoration: underline;">
-                點按此處
-            </a>
+      <div class="card rv">
+        <div class="ctop"><h3>nRF54L15 Edge AI 節點</h3><span class="badge">授課教具</span></div>
+        <p class="hook">Nordic 新世代 MCU 上的端側感測與推論節點，同時是產業學院課程的實作教具。</p>
+        <p>在 Zephyr RTOS 上整合 MPU6050 IMU 取樣、BLE 資料傳輸與端側推論流程，撰寫完整開發手冊與 Web 端視覺化工具。從驅動撰寫、除錯到燒錄驗證的整套流程被整理成教材，用於對外企業班教學。</p>
+        <div class="foot">
+          <div class="chips"><span class="chip">nRF54L15</span><span class="chip">Zephyr</span><span class="chip">BLE</span><span class="chip">IMU</span><span class="chip">端側推論</span></div>
+          <a class="repo" href="https://github.com/YORROY123/nrf54LDK-imu-ble" target="_blank" rel="noopener">nrf54LDK-imu-ble ↗</a>
         </div>
+      </div>
 
-        <div style="margin: 20px 0;">
-            <p><strong>ESP32 blink led use http:server</strong></p>
-            <p style="color: #dfe6e9;">（尚未提供連結）</p>
+      <div class="card rv">
+        <div class="ctop"><h3>自製步進馬達</h3><span class="badge b2">Maker</span></div>
+        <p class="hook">與其讀規格書，不如自己繞一顆出來。</p>
+        <p>從機構、繞線到驅動一手打造一顆步進馬達，搭配 Arduino CNC Shield 完成控制實測，並以示波器量測 PWM 驅動訊號驗證波形。做完之後再看伺服與運動控制的規格書，讀到的東西完全不一樣。</p>
+        <div class="foot">
+          <div class="chips"><span class="chip">機構設計</span><span class="chip">PWM 驅動</span><span class="chip">CNC Shield</span><span class="chip">示波器量測</span></div>
+          <div class="lnks">
+            <a class="repo vid" href="https://www.youtube.com/watch?v=2Yv4LIt1Dz8" target="_blank" rel="noopener">▶ 馬達實測</a>
+            <a class="repo vid" href="https://www.youtube.com/shorts/NJ2u4HRR9pU" target="_blank" rel="noopener">▶ PWM 量測</a>
+          </div>
         </div>
-    </section>
-</main>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>Servo Scope 馬達訊號擷取軟體</h3><span class="badge">SEMICON 2026 展出</span><span class="badge b2">自建測試台</span></div>
+        <p class="hook">自己搭測試台、自己寫韌體、自己做 PC 端軟體——然後帶去 SEMICON Taiwan 2026 展場親自解說。</p>
+        <p>隸屬「機械人之能源效率探討研析」計畫。以步進馬達（東方馬達 AR66AK／αSTEP）搭配飛輪慣量負載自建測試台，ESP32 經 RS-422 差動接收擷取增量式編碼器 A／B／Z 相訊號，量測急停微幅抖動與整定時間；PC 端以 PySide6 + pyqtgraph 自製四通道示波器上位機（波形／速度環、游標量測、CSV 匯出），打包成免安裝 exe。並自行完成編碼器銘牌訂購碼解碼、接線驗證流程與互動配線圖文件。</p>
+        <div class="metric">4000 P/R 編碼器 → 四倍頻 16000 counts/rev，角度解析度 0.0225°</div>
+        <div class="foot">
+          <div class="chips"><span class="chip">ESP32</span><span class="chip">RS-422</span><span class="chip">正交編碼器</span><span class="chip">PySide6</span><span class="chip">訊號處理</span></div>
+          <a class="repo" href="https://github.com/YORROY123/motor-scope-exe" target="_blank" rel="noopener">motor-scope-exe ↗</a>
+        </div>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>AI Cabinet 智慧耗材櫃</h3><span class="badge b2">全地端語音</span></div>
+        <p class="hook">對著櫃子講話就能領料歸還，全程不上雲、不看網路臉色。</p>
+        <p>ESP32-S3 + Raspberry Pi 5，整合 faster-whisper 語音辨識、rapidfuzz 規則式意圖解析、SQLite 庫存與 piper TTS 語音回覆，實作槽位填充（slot filling）對話狀態機處理多輪補問。已完成方案介紹與定價頁。</p>
+        <div class="foot">
+          <div class="chips"><span class="chip">faster-whisper</span><span class="chip">piper TTS</span><span class="chip">對話狀態機</span><span class="chip">ESP32-S3</span></div>
+          <div class="lnks">
+            <a class="repo vid" href="https://youtu.be/DxDmmNWjvi8" target="_blank" rel="noopener">▶ 操作演示</a>
+            <a class="repo" href="https://github.com/YORROY123/ai-cabinet" target="_blank" rel="noopener">ai-cabinet ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>員工餐廳冷櫃 IoT 場域驗證</h3><span class="badge b2">實地佈建</span></div>
+        <p class="hook">把冷櫃監控從實驗室搬進一間真的每天在出餐的餐廳廚房。</p>
+        <p>高能效商用冷凍貯存櫃場域驗證計畫，場域為工研院員工餐廳。我負責 WiFi 訊號實地量測與網點勘查、繪製餐廳網點線路圖與施工圖、協調廠商完成弱電佈線，再把邊緣節點與冷櫃監控系統實際上線。營運中的廚房不能停機、不能重拉線，所有佈點都要遷就既有管路與網路接口。</p>
+        <div class="metric">Raspberry Pi 5 + NVMe SSD 掉盤問題：PCIe 降 Gen2、關閉 ASPM 與 NVMe 省電、上電初始化延遲、看門狗自動重啟 → 24 小時無人值守</div>
+        <div class="foot"><div class="chips"><span class="chip">場域佈建</span><span class="chip">弱電配線</span><span class="chip">WiFi 訊號量測</span><span class="chip">Raspberry Pi 5</span><span class="chip">Linux 調校</span></div></div>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>Factory Monitor 與冷櫃數位孿生</h3></div>
+        <p class="hook">把工廠的電表、資料擷取器與冷櫃，變成一個能遠端看、能遠端控的 3D 儀表板。</p>
+        <p>Raspberry Pi 上以 Node.js／Express + socket.io + MQTT 建置量測資料傳輸（DAQ）與遠端控制服務，整合 Modbus TCP 電表（Yokogawa GM10、PA60 功率分析儀），PM2 常駐、Tailscale 遠端安全連線，並以 Streamlit 建置 3D 數位孿生儀表板。</p>
+        <div class="foot">
+          <div class="chips"><span class="chip">Modbus TCP</span><span class="chip">MQTT</span><span class="chip">socket.io</span><span class="chip">Streamlit</span><span class="chip">Tailscale</span></div>
+          <a class="repo" href="https://github.com/YORROY123/freezer-digital-twin" target="_blank" rel="noopener">freezer-digital-twin ↗</a>
+        </div>
+      </div>
+
+      <div class="card feat rv">
+        <div class="ctop"><h3>邊緣服務機器人控制架構（智慧語音風扇）</h3><span class="badge">FEATURED</span><span class="badge b2">已發表．第一作者</span></div>
+        <p class="hook">用熱影像在全黑的房間裡找到人、用跑在本機的 LLM 聽懂「有點熱」是什麼意思，然後在一顆沒有角度回授的馬達上，把風穩穩鎖定在對的方向。</p>
+        <p>Raspberry Pi 5 全地端架構，三項能力疊在一起：<strong style="color:#e9ecf1">語音互動</strong>以 Qwen-2.5-0.5B（Q8_0／llama.cpp）+ Vosk 離線 STT 做零樣本語意映射與雙層攔截網，聽得懂口語化指令；<strong style="color:#e9ecf1">無光感知</strong>以 MLX90640 熱像（24×32、16 Hz）搭配「熱源質心 / YOLO」雙層人體偵測，不需可見光也保護隱私；<strong style="color:#e9ecf1">指向鎖定</strong>則在沒有編碼器回授的馬達上，僅憑視覺回授以 EMA + 雙閾值遲滯 + 漂移校正控制迴路維持鎖定，解決指向在邊界反覆跳動的問題。</p>
+        <div class="nums">
+          <div class="num"><b>52% → 88%</b><span>語意映射正確率</span></div>
+          <div class="num"><b>~1.74 s</b><span>端到端延遲<br>決策 + IR &lt; 50 ms</span></div>
+          <div class="num"><b>↓ 31.7%</b><span>追蹤誤差 MAE<br>震盪 ↓ 80%+</span></div>
+          <div class="num"><b>&lt; 4 GB</b><span>全地端記憶體<br>8–8.5 FPS</span></div>
+        </div>
+        <div class="foot">
+          <div class="chips"><span class="chip">MLX90640 熱像</span><span class="chip">Qwen-2.5-0.5B</span><span class="chip">llama.cpp</span><span class="chip">Vosk STT</span><span class="chip">無回授控制迴路</span></div>
+          <a class="repo" href="https://www.automan.tw/tw/magazine-period/magCont/1049/3368" target="_blank" rel="noopener">機械工業雜誌 521 期 ↗</a>
+        </div>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>微流體藥敏影像判讀</h3><span class="badge b2">科專提案</span></div>
+        <p class="hook">讓機器讀 McFarland 濁度標準管，並且誠實說出自己有多確定。</p>
+        <p>與微流體獸醫藥敏檢測公司合作，導入影像 AI 判讀 McFarland 濁度標準管並輸出信心值，搭配數位孿生 IoT 監控。作為經濟部技術司「科專技術應用落地實證計畫」提案之技術主軸。</p>
+        <div class="foot"><div class="chips"><span class="chip">影像判讀</span><span class="chip">信心值輸出</span><span class="chip">ESP32-CAM</span><span class="chip">計畫提案</span></div></div>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>nRF5340 LE Audio 喇叭</h3></div>
+        <p class="hook">練通 Nordic 新世代雙核架構與 LC3 音訊串流。</p>
+        <p>以 nRF5340 實作 LE Audio（LC3 codec）音訊串流節點，處理雙核心（App／Net）分工、音訊同步與 Auracast 廣播應用場景。</p>
+        <div class="foot"><div class="chips"><span class="chip">nRF5340</span><span class="chip">LE Audio</span><span class="chip">LC3</span><span class="chip">雙核架構</span></div></div>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>量測儀器逆向整合</h3><span class="badge b2">協定逆向</span></div>
+        <p class="hook">封閉的商用量測設備，也要能接進自建的 DAQ。</p>
+        <p>對 Mahr 數位游標卡尺的無線傳輸協定進行逆向分析（JS hook + Python 直讀），繞過原廠封閉軟體直接取得量測值；另完成 Thingy:53 / nRF5340 韌體逆向，重建可自行編譯的 Zephyr 專案與燒錄流程。</p>
+        <div class="foot"><div class="chips"><span class="chip">協定逆向</span><span class="chip">Python</span><span class="chip">JS Hook</span><span class="chip">Zephyr 移植</span></div></div>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>Electrician Lab 電匠考題互動網站</h3></div>
+        <p class="hook">把自己考照的過程做成別人也能用的互動教材。</p>
+        <p>以 Astro + Cloudflare Pages 建置電匠考題互動練習網站，內含停車塔控制邏輯模擬器，把梯形圖控制邏輯變成可以在瀏覽器裡點著跑的動態流程。</p>
+        <div class="foot">
+          <div class="chips"><span class="chip">Astro</span><span class="chip">Cloudflare Pages</span><span class="chip">PLC 邏輯模擬</span></div>
+          <a class="repo" href="https://electrician.electrical-software-roy.work" target="_blank" rel="noopener">線上瀏覽 ↗</a>
+        </div>
+      </div>
+
+      <div class="card rv">
+        <div class="ctop"><h3>開發板實驗與基礎建設</h3><span class="badge b2">持續練習</span></div>
+        <p class="hook">還沒變成專案的東西，都堆在這裡。</p>
+        <p>STM32 與自訂晶片的 Wokwi 線上模擬、ESP32 HTTP Server 控制 LED；Docker 容器化部署、Yocto 客製嵌入式 Linux、ROS2 + Gazebo 機器人模擬、FreeCAD 參數化建模腳本，以及一支 PowerShell 端點資安稽核（posture check）腳本。手上沒有硬體時，就先在模擬環境把流程跑通。</p>
+        <div class="foot">
+          <div class="chips"><span class="chip">STM32</span><span class="chip">Wokwi</span><span class="chip">Docker</span><span class="chip">Yocto</span><span class="chip">ROS2 / Gazebo</span><span class="chip">PowerShell</span></div>
+          <div class="lnks">
+            <a class="repo" href="https://wokwi.com/projects/428412528326705153" target="_blank" rel="noopener">STM32 blink ↗</a>
+            <a class="repo" href="https://wokwi.com/projects/428404275963416577" target="_blank" rel="noopener">custom chip ↗</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="pub">
+  <div class="wrap">
+    <div class="shead rv">
+      <span class="snum">03 / PUBLICATIONS</span>
+      <h2>著作與發表</h2>
+      <p class="sdesc">進入職場一年內完成兩篇第一作者期刊論文（其中一篇具 DOI 可查證），並以通訊作者身分投稿國際冷凍大會。</p>
+    </div>
+    <div class="pubs rv">
+      <div class="pub">
+        <div class="when">2026 / 05</div>
+        <div>
+          <div class="ti">測量冷凍冷藏庫板熱傳導係數既有方法探討</div>
+          <div class="en">Review of Current Measurement Methods for the Thermal Conductivity of Refrigeration Insulation Panels</div>
+          <div class="ve" style="margin-top:6px">《冷凍空調 &amp; 能源科技》第 157 期，pp. 62–73　·　林子揚、李永明、賴宗佑</div>
+          <div class="links">
+            <a href="https://doi.org/10.29911/JEHVACE_NEW.202605_(157).0004" target="_blank" rel="noopener">DOI 10.29911/JEHVACE_NEW.202605_(157).0004 ↗</a>
+            <a href="https://www.airitilibrary.com/Article/Detail/P20220314001-N202606130007-00004" target="_blank" rel="noopener">華藝線上圖書館 ↗</a>
+          </div>
+        </div>
+        <div class="role">第一作者</div>
+      </div>
+      <div class="pub">
+        <div class="when">2026 / 07</div>
+        <div>
+          <div class="ti">整合熱影像指向鎖定與輕量化語意映射之邊緣服務機器人控制架構</div>
+          <div class="ve" style="margin-top:6px">《機械工業雜誌》市場前線．2026 年 8 月號（第 521 期），2026/07/29 刊登　·　林子揚、蕭哲安</div>
+          <div class="ve" style="color:var(--dim);font-size:12.5px;margin-top:4px">關鍵字：服務機器人 · 邊緣運算 · 大型語言模型</div>
+          <div class="links">
+            <a href="https://www.automan.tw/tw/magazine-period/magCont/1049/3368" target="_blank" rel="noopener">線上全文 ↗</a>
+          </div>
+        </div>
+        <div class="role">第一作者</div>
+      </div>
+      <div class="pub">
+        <div class="when">2027 / 08</div>
+        <div>
+          <div class="ti">Software and Network Architecture of a Low-Cost Edge-Based Temperature Monitoring and Food-Safety Alert System for Commercial Freezers</div>
+          <div class="ve" style="margin-top:6px">ICR 2027 第 27 屆 IIR 國際冷凍大會（首爾 COEX），Paper No. 779．投稿中</div>
+        </div>
+        <div class="role">通訊作者 / Speaker</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="exp">
+  <div class="wrap">
+    <div class="shead rv">
+      <span class="snum">04 / EXPERIENCE</span>
+      <h2>經歷與學歷</h2>
+    </div>
+    <div class="tl">
+      <div class="ev now rv">
+        <div class="when">2025 / 08 — 現在</div>
+        <h3>副研究人員（研發替代役）</h3>
+        <div class="org">財團法人工業技術研究院　綠能與環境研究所　智慧控制設備研究室｜新竹縣竹東鎮</div>
+        <ul>
+          <li><strong>能效測試與驗證</strong>：執行 CNS 62552 冷凍冷藏設備能效測試專案，含 Mitsubishi MR-WZ55M-H、NR-CX37M-H 機種之跨實驗室比對（與大電力／TERTEC），負責查核報告與期中簡報。</li>
+          <li><strong>量測系統與韌體開發</strong>：開發 MCU（Nordic）與 IPC（Raspberry Pi、Jetson）節點以提升冷凍設備節能率；建置 Modbus TCP 資料擷取與遠端控制服務。</li>
+          <li><strong>控制演算法</strong>：以能量平衡推導熱負載預測變頻控制，建立 Simulink 模型與參數最佳化流程，支援院內專利提案之技術驗證。</li>
+          <li><strong>邊緣 AI 應用</strong>：智慧耗材櫃、智慧語音風扇、低溫（-40°C）結霜影像偵測可行性評估，並主動開發電宰廠急速冷凍場域作為驗證案例。</li>
+          <li><strong>研究方法開發</strong>：以 PINN 反算庫板熱傳導係數，FreeCAD + CalculiX FEM 造資料、解析解交叉驗證，封裝成可重用的 k 值預測工具。</li>
+          <li><strong>計畫執行與管理（PM）</strong>：住宅家電效率升級計畫——負責計畫書撰寫、查核點與進度管理、月報與期中／期末報告，主持跨單位會議並協調委外單位（陽明交大）；自寫 EPREL 歐盟能效資料庫爬蟲，執行電冰箱國際能效標竿分析與住宅入戶量測。</li>
+          <li><strong>場域驗證與現場建置</strong>：高能效商用冷凍貯存櫃場域驗證計畫（工研院員工餐廳），負責 WiFi 訊號量測、網點勘查、施工圖繪製與弱電佈線協調，並解決邊緣節點長時間掛機的穩定性問題。</li>
+          <li><strong>對外展出</strong>：<strong>SEMICON Taiwan 2026</strong> 參展——負責 demo 系統開發、展台布建與現場設備安裝，展期擔任現場技術解說。</li>
+          <li><strong>技術服務</strong>：經濟部產業競爭力輔導團（MOEAI+）製造業 AI 診斷輔導員；提案技術司科專技術應用落地實證計畫。</li>
+        </ul>
+      </div>
+      <div class="ev rv">
+        <div class="when">2022 / 02 — 2025 / 02</div>
+        <h3>碩士｜系統工程暨造船學系</h3>
+        <div class="org">國立成功大學（指導教授：黃正弘）</div>
+        <ul><li>論文：<strong>熱成像技術於鋰電池未知熱源之預測</strong>——以共軛梯度法（CGM）逆算結合 CFD-ACE+ 與紅外線熱像，預測電池內部熱源 3D 分佈，<strong>溫度誤差 &lt; 0.01%</strong>。自行以 Fortran 撰寫 DLL 副程式串接 CFD-ACE+ 完成數值方法演算。</li></ul>
+      </div>
+      <div class="ev rv">
+        <div class="when">在職進修</div>
+        <h3>陽明交大產學合作專班 · 勞動部產業人才投資方案</h3>
+        <div class="org">AI／Python／FPGA／半導體培訓　·　四班結訓共 153 小時</div>
+        <ul><li>Python AI、物聯網系統設計、AI 應用碩士學分、NVIDIA Jetson Nano。入職後仍持續補齊半導體與硬體設計的基礎。</li></ul>
+      </div>
+      <div class="ev rv">
+        <div class="when">2022 / 06 — 2022 / 09</div>
+        <h3>儲能工程師（暑期實習）</h3>
+        <div class="org">裕隆汽車製造股份有限公司　研發技術處儲能設計組｜苗栗縣三義鄉</div>
+        <ul><li>以 NX Unigraphics 完成儲能產品圖檔，並執行產品熱模擬測試。</li></ul>
+      </div>
+      <div class="ev rv">
+        <div class="when">2017 / 09 — 2021 / 06</div>
+        <h3>學士｜海洋科學系</h3>
+        <div class="org">國立中山大學</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="teach">
+  <div class="wrap">
+    <div class="shead rv">
+      <span class="snum">05 / TEACHING &amp; ADVISORY</span>
+      <h2>教學與產業輔導</h2>
+      <p class="sdesc">技術要能被別人用起來才有價值。我同時面對動手實作的工程師，與評估導入效益的決策層。</p>
+    </div>
+    <div class="tgrid">
+      <div class="tbox hl rv">
+        <h3>工研院產業學院講師｜「Claude Code 韌體開發」實作課程</h3>
+        <div class="meta">課號 2326050089　·　2026／08 開課　·　nRF54L15-DK 教具　·　14 人小班</div>
+        <ul>
+          <li>學員為<strong>外部企業付費學員</strong>，涵蓋機電／電子業之研發工程師，以及<strong>處長、經理級主管</strong>。</li>
+          <li>獨立負責課程規劃、教材與範例程式撰寫、實機實作帶領。</li>
+          <li>課程主題為以 AI 輔助加速 Zephyr／Nordic 平台的韌體開發流程：需求拆解 → 驅動撰寫 → 除錯 → 燒錄驗證的完整實務。</li>
+          <li>對工程師要講得夠底層，對主管要講得清楚導入效益與風險——需要在兩個層級之間切換技術語言。</li>
+        </ul>
+      </div>
+      <div class="tbox rv">
+        <h3>產業輔導與計畫</h3>
+        <div class="meta">ADVISORY / GOVERNMENT PROGRAMS</div>
+        <ul>
+          <li><strong>經濟部產業競爭力輔導團（MOEAI+）製造業 AI 診斷輔導員</strong>：執行「19+1」措施輔導案，為業者盤點 AI 導入切入點（自動過磅站、文件 AI 助理、設備故障預警、進料影像辨識）並評估補助申請可行性。</li>
+          <li><strong>經濟部技術司科專技術應用落地實證計畫</strong>提案人。</li>
+          <li><strong>中衛中心深度節能診斷</strong>輔導：執行企業節能量測與診斷。</li>
+          <li><strong>SEMICON Taiwan 2026 參展</strong>：負責 demo 系統開發、展台布建與現場設備安裝，展期對參觀廠商進行現場技術解說。</li>
+          <li>院內點子計畫「LabVoice」工業語音 AI 提案。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="cert">
+  <div class="wrap">
+    <div class="shead rv">
+      <span class="snum">06 / CREDENTIALS</span>
+      <h2>證照與訓練</h2>
+      <p class="sdesc">電機類證照讓我能直接和廠務、電控工程師對話，也能自己判斷節能量測該量在哪個電壓、電流位置。</p>
+    </div>
+    <div class="certs">
+      <div class="cert rv"><div class="k">電機</div><div class="n">乙種電匠</div><div class="i">經濟部能源署</div></div>
+      <div class="cert rv"><div class="k">電機</div><div class="n">丙級室內配線技術士</div><div class="i">勞動部勞動力發展署</div></div>
+      <div class="cert rv"><div class="k">工業通訊</div><div class="n">MXCA Industrial Wireless</div><div class="i">MOXA</div></div>
+      <div class="cert rv"><div class="k">產業 AI</div><div class="n">產業 AI 人才培訓 完訓證書</div><div class="i">經濟部產業發展署．15 小時</div></div>
+      <div class="cert rv"><div class="k">產業輔導</div><div class="n">產業競爭力輔導團 輔導員證書</div><div class="i">經濟部 MOEAI+</div></div>
+      <div class="cert rv"><div class="k">物聯網</div><div class="n">物聯網通訊網路設計實務</div><div class="i">北訓資訊職訓中心．45 小時</div></div>
+      <div class="cert rv"><div class="k">雲端</div><div class="n">AWS 雲端培訓證書</div><div class="i">AWS × NCKU</div></div>
+      <div class="cert rv"><div class="k">資料庫</div><div class="n">資料庫管理系統（MySQL）</div><div class="i">職訓結訓．2023</div></div>
+      <div class="cert rv"><div class="k">語言</div><div class="n">TOEIC 670</div><div class="i">ETS</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="contact" class="contact">
+  <div class="wrap rv">
+    <span class="snum">07 / CONTACT</span>
+    <h2>一起把東西做出來</h2>
+    <p>如果你正在找一個能從熱傳理論一路做到現場配線的工程師，歡迎聊聊。</p>
+    <div class="btns" style="justify-content:center;margin-bottom:0">
+      <a class="btn p" href="mailto:rongh7426@gmail.com">寄信給我</a>
+      <a class="btn s" href="https://github.com/YORROY123" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap">© 2026 林子揚 Roy Lin　·　Built &amp; deployed on GitHub Pages</div></footer>
+
+<script>
+(function(){
+  var nav=document.getElementById("nav");
+  var onScroll=function(){ nav.classList.toggle("stuck", window.scrollY>10); };
+  onScroll(); window.addEventListener("scroll",onScroll,{passive:true});
+
+  var els=document.querySelectorAll(".rv");
+  if(!("IntersectionObserver" in window)){
+    Array.prototype.forEach.call(els,function(e){e.classList.add("in")});
+    return;
+  }
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en,i){
+      if(en.isIntersecting){
+        var el=en.target;
+        setTimeout(function(){el.classList.add("in")}, Math.min(i*70,280));
+        io.unobserve(el);
+      }
+    });
+  },{rootMargin:"0px 0px -60px 0px",threshold:.05});
+  Array.prototype.forEach.call(els,function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>
